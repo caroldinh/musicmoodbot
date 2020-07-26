@@ -30,6 +30,8 @@ GUILD = 'hobbyhacks bot test'
 allMessages = ""
 loading_music = False
 
+logChannel = None
+
 
 # client = discord.Client()
 bot = commands.Bot(command_prefix='!')
@@ -45,10 +47,10 @@ async def daybreakhelp(ctx):
 
   print("test")
   
-  embedVar.add_field(name="!daybreakhelp", value="'!daybreakhelp' shows help menu", inline=False) # Copy and paste this but change "Title" to the name of a command and "Descripton" to what it does
+  embedVar.add_field(name="!daybreakhelp", value=" - Shows help menu", inline=False) # Copy and paste this but change "Title" to the name of a command and "Descripton" to what it does
 
-  embedVar.add_field(name="!start", value="'!start' connects bot to voice channel", inline=False) 
-  embedVar.add_field(name="!mood", value=" '!mood' returns the mood of the sever.", inline=False) 
+  embedVar.add_field(name="!start", value=" - Connects to voice channel", inline=False) 
+  embedVar.add_field(name="!mood", value=" - Returns primary mood of the server", inline=False) 
   embedVar.add_field(name="Listen to music", value="Make sure you join the voice channel 'music' to listen! If no music is playing, just say something in any channel and music will automatically start playing.", inline=False) 
 
 
@@ -57,9 +59,13 @@ async def daybreakhelp(ctx):
 @bot.command()
 async def yt(ctx, url):
 
-    embedVar = discord.Embed(title="Music Sentiment Bot", description="Retrieving song...", color=0x03f8fc)
+    for c in ctx.message.guild.channels:
+        if c.type == ChannelType.text and c.name == "daybreak-logs":
+            logChannel = c
+
+    embedVar = discord.Embed(title="Daybreak", description="Retrieving song...", color=0x03f8fc)
     # embedVar.add_field(name="SongName", value=url, inline=False)
-    await ctx.message.channel.send(embed=embedVar)
+    await logChannel.send(embed=embedVar)
 
     # print("Hello")
 
@@ -85,9 +91,9 @@ async def yt(ctx, url):
         ydl.download([url])
     for file in os.listdir("./"):
         if file.endswith(".mp3"):
-            embedVar = discord.Embed(title="Music Sentiment Bot", color=0x03f8fc)
+            embedVar = discord.Embed(title="Daybreak", color=0x03f8fc)
             embedVar.add_field(name="Playing Song:", value=str(file), inline=False)
-            await ctx.message.channel.send(embed=embedVar)
+            await logChannel.send(embed=embedVar)
             os.rename(file, 'song.mp3')
     vc.play(discord.FFmpegPCMAudio("song.mp3"))
 
@@ -96,16 +102,19 @@ async def start(ctx):
 
     found = False
     for c in ctx.message.guild.channels:
-        if c.type == ChannelType.voice and c.name == "music":
+        if c.type == ChannelType.voice and c.name == "daybreak-stream":
             found = True
             vc = await c.connect()
-            embedVar = discord.Embed(title="Music Sentiment Bot", description="Connected to channel 'music'", color=0x03f8fc)
+            embedVar = discord.Embed(title="Daybreak", description="Connected to channel 'daybreak-stream'", color=0x03f8fc)
             await ctx.message.channel.send(embed=embedVar)
+        if c.type == ChannelType.text and c.name == "daybreak-logs":
+            logChannel = c
     if not found:
-        category = await ctx.message.guild.create_category('Music Bot')
-        c = await ctx.message.guild.create_voice_channel('music', category=category)
+        category = await ctx.message.guild.create_category('Daybreak')
+        c = await ctx.message.guild.create_voice_channel('daybreak-stream', category=category)
+        logChannel = await ctx.message.guild.create_text_channel('daybreak-logs', category=category)
         vc = await c.connect()
-        embedVar = discord.Embed(title="Music Sentiment Bot", description="Created channel 'music'", color=0x03f8fc)
+        embedVar = discord.Embed(title="Daybreak", description="Created channel 'daybreak-stream'", color=0x03f8fc)
         await ctx.message.channel.send(embed=embedVar)
             
 
@@ -130,7 +139,7 @@ async def mood(ctx):
                 primary_mood = tone["tone_id"]
                 max_score = tone["score"]
         send = "The primary mood of the server is: " + primary_mood
-        embedVar = discord.Embed(title="Music Sentiment Bot", description=send, color=0x03f8fc)
+        embedVar = discord.Embed(title="Daybreak", description=send, color=0x03f8fc)
         await ctx.message.channel.send(embed=embedVar)
             # await message.channel.send(send)
     except ApiException as ex:
@@ -158,7 +167,7 @@ async def on_message(message):
     if len(messagelog) > 50:
         messagelog.pop(0)
 
-    if str(message.author) != "hobbyhacks-music-bot#2347" and message.content[0] != '!':
+    if str(message.author) != "Daybreak#2347" and message.content[0] != '!':
         messagelog.append(message.content)
     
         messagelog = "\n".join(messagelog)
@@ -169,7 +178,7 @@ async def on_message(message):
 
         for c in message.guild.channels:
             ctx = await bot.get_context(message)
-            if c.type == ChannelType.voice and c.name == "music":
+            if c.type == ChannelType.voice and c.name == "daybreak-stream":
                 vc = get(bot.voice_clients, guild=ctx.guild)
                 if not vc.is_playing():
                         f = open("messagelog.txt", "r")
@@ -203,9 +212,13 @@ async def on_message(message):
                             musicList = musicList.split("\n")
                             url = musicList[random.randint(0, len(musicList)-1)]
                             await yt(ctx, url)
-                            embedVar = discord.Embed(title="Music Sentiment Bot", description=send, color=0x03f8fc)
-                            await ctx.message.channel.send(embed=embedVar)
-                                # await message.channel.send(send)
+                            embedVar = discord.Embed(title="Daybreak", description=send, color=0x03f8fc)
+
+                            for c in ctx.message.guild.channels:
+                                if c.type == ChannelType.text and c.name == "daybreak-logs":
+                                    logChannel = c
+                            await logChannel.send(embed=embedVar)
+                
                         except ApiException as ex:
                             print("Method failed with status code " + str(ex.code) + ": " + ex.message)
 
