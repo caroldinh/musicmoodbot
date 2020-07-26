@@ -166,12 +166,16 @@ async def on_message(message):
                                     primary_mood = tone["tone_id"]
                                     max_score = tone["score"]
                             send = "The primary mood of the server is: " + primary_mood
-                            if primary_mood == "tentative" or primary_mood == "neutral" or primary_mood == "anger":
+                            if primary_mood == "tentative" or primary_mood == "neutral":
                                 musicFile = "calm.txt"
-                            elif primary_mood == "joy" or primary_mood == "confident" or primary_mood == "analytical" :
+                            elif primary_mood == "anger" or primary_mood == "confident":
+                                musicFile = "intense.txt"
+                            elif primary_mood == "joy" or primary_mood == "analytical" :
                                 musicFile = "energetic.txt"
-                            elif primary_mood == "sad" or primary_mood == "fear":
+                            elif primary_mood == "sad":
                               musicFile = "sad.txt"
+                            elif primary_mood == "fear":
+                                musicFile = "soothing.txt"
                             print(musicFile)
                             f = open(musicFile, 'r')
                             musicList = f.read()
