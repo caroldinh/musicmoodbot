@@ -48,7 +48,8 @@ async def daybreakhelp(ctx):
   embedVar.add_field(name="!daybreakhelp", value="'!daybreakhelp' shows help menu", inline=False) # Copy and paste this but change "Title" to the name of a command and "Descripton" to what it does
 
   embedVar.add_field(name="!start", value="'!start' connects bot to voice channel", inline=False) 
-  embedVar.add_field(name="!mood", value=" '!mood' returns the mood of the sever. MAKE SURE YOU JOIN THE VOICE CHANNEL 'music' TO LISTEN MUSIC.", inline=False) 
+  embedVar.add_field(name="!mood", value=" '!mood' returns the mood of the sever.", inline=False) 
+  embedVar.add_field(name="Listen to music", value="Make sure you join the voice channel 'music' to listen! If no music is playing, just say something in any channel and music will automatically start playing.", inline=False) 
 
 
   await ctx.message.channel.send(embed=embedVar)
