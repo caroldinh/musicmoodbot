@@ -51,12 +51,13 @@ async def daybreakhelp(ctx):
 
   embedVar.add_field(name="!start", value=" - Connects to voice channel", inline=False) 
   embedVar.add_field(name="!mood", value=" - Returns primary mood of the server", inline=False) 
+  embedVar.add_field(name="!skip", value=" - Skips the currently-playing song", inline=False) 
   embedVar.add_field(name="Listen to music", value="Make sure you join the voice channel 'music' to listen! If no music is playing, just say something in any channel and music will automatically start playing.", inline=False) 
 
 
   await ctx.message.channel.send(embed=embedVar)
 
-@bot.command()
+# @bot.command()
 async def yt(ctx, url):
 
     for c in ctx.message.guild.channels:
@@ -98,7 +99,23 @@ async def yt(ctx, url):
     vc.play(discord.FFmpegPCMAudio("song.mp3"))
 
 @bot.command()
+async def skip(ctx):
+    
+    message = ctx.message
+    messagelog = logMessage(ctx.message)
+    embedVar = discord.Embed(title="Daybreak", description="Skipping song...", color=0x03f8fc)
+    await message.channel.send(embed=embedVar)
+    await grabSong(message, messagelog, True)
+
+@bot.command()
 async def start(ctx):
+
+    id = str(ctx.message.guild.id)
+    message_file_exists = os.path.isfile(id + "_messagelog.txt")
+
+    if(not message_file_exists):
+        f = open(id + "_messagelog.txt", "x")
+        f.close()
 
     found = False
     for c in ctx.message.guild.channels:
@@ -124,7 +141,14 @@ async def mood(ctx):
     # print("test Called")
     # await ctx.send('test')
 
-    f = open("messagelog.txt", "r")
+    id = str(ctx.message.guild.id)
+    message_file_exists = os.path.isfile(id + "_messagelog.txt")
+
+    if(not message_file_exists):
+        f = open(id + "_messagelog.txt", "x")
+        f.close()
+
+    f = open(id + "_messagelog.txt", "r")
     messagelog = f.read()
     f.close()
 
@@ -156,8 +180,23 @@ async def on_message(message):
     print(str(message.author) + ": " + str(message.content))
     # print(str(message.channel))
 
+    if str(message.author) != "Daybreak#2347" and message.content[0] != '!':
 
-    f = open("messagelog.txt", "r")
+        messagelog = logMessage(message)
+        await grabSong(message, messagelog, False)
+
+    await bot.process_commands(message)
+
+def logMessage(message):
+    id = str(message.guild.id)
+    message_file_exists = os.path.isfile(id + "_messagelog.txt")
+
+    if(not message_file_exists):
+        f = open(id + "_messagelog.txt", "x")
+        f.close()
+
+    id = str(message.guild.id)
+    f = open(id + "_messagelog.txt", "r")
     messagelog = f.read()
     f.close()
     messagelog = messagelog.split("\n")
@@ -167,21 +206,27 @@ async def on_message(message):
     if len(messagelog) > 50:
         messagelog.pop(0)
 
-    if str(message.author) != "Daybreak#2347" and message.content[0] != '!':
+    if(message.content[0] != "!"):
         messagelog.append(message.content)
-    
-        messagelog = "\n".join(messagelog)
 
-        f = open("messagelog.txt", "w")
-        f.write(messagelog)
-        f.close()
+    messagelog = "\n".join(messagelog)
 
-        for c in message.guild.channels:
+    f = open(id + "_messagelog.txt", "w")
+    f.write(messagelog)
+    f.close()
+
+    return messagelog
+
+async def grabSong(message, messagelog, skip):
+    for c in message.guild.channels:
             ctx = await bot.get_context(message)
             if c.type == ChannelType.voice and c.name == "daybreak-stream":
                 vc = get(bot.voice_clients, guild=ctx.guild)
-                if not vc.is_playing():
-                        f = open("messagelog.txt", "r")
+                if (not vc.is_playing()) or skip:
+                        if(skip):
+                            vc.stop()
+                        id = str(message.guild.id)
+                        f = open(id + "_messagelog.txt", "r")
                         messagelog = f.read()
                         f.close()
                         try:
@@ -221,8 +266,6 @@ async def on_message(message):
                 
                         except ApiException as ex:
                             print("Method failed with status code " + str(ex.code) + ": " + ex.message)
-
-    await bot.process_commands(message)
 
 # client.run(TOKEN)
 bot.run(TOKEN)
