@@ -57,7 +57,7 @@ async def daybreakhelp(ctx):
 
   await ctx.message.channel.send(embed=embedVar)
 
-# @bot.command()
+@bot.command()
 async def yt(ctx, url):
 
     for c in ctx.message.guild.channels:
@@ -79,7 +79,7 @@ async def yt(ctx, url):
         return
 
     vc = get(bot.voice_clients, guild=ctx.guild)
-    ydl_opts = {'format': 'bestaudio'}
+    # ydl_opts = {'format': 'bestaudio'}
     ydl_opts = {
         'format': 'bestaudio/best',
         'postprocessors': [{
@@ -87,13 +87,23 @@ async def yt(ctx, url):
             'preferredcodec': 'mp3',
             'preferredquality': '192',
         }],
+        'default_search': 'auto',
+        'noplaylist': True,
     }
+
+    
     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
         ydl.download([url])
     for file in os.listdir("./"):
         if file.endswith(".mp3"):
             embedVar = discord.Embed(title="Daybreak", color=0x03f8fc)
-            embedVar.add_field(name="Playing Song:", value=str(file), inline=False)
+            songname = str(file)
+            songname = songname.split("-")
+            for segment in songname:
+                if ".mp3" in segment:
+                    songname.remove(segment)
+            songname = "".join(songname)
+            embedVar.add_field(name="Playing Song:", value=songname, inline=False)
             await logChannel.send(embed=embedVar)
             os.rename(file, 'song.mp3')
     vc.play(discord.FFmpegPCMAudio("song.mp3"))
